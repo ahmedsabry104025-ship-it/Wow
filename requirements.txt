@@ -1,0 +1,2 @@
+python-aternos>=3.0.0
+
