@@ -13,7 +13,6 @@ PASSWORD = os.environ.get("ATERNOS_PASSWORD")
 SERVER_INDEX = int(os.environ.get("SERVER_INDEX", "0"))
 PORT = int(os.environ.get("PORT", "8080"))
 
-# الأوقات بالثواني
 THREE_HOURS = 3 * 60 * 60
 RETRY_DELAY = 5 * 60  # إعادة المحاولة بعد 5 دقائق عند حدوث خطأ
 
@@ -22,7 +21,7 @@ if not USER or not PASSWORD:
     sys.exit(1)
 
 # ==========================================
-# 2. خادم ويب خفيف جداً مدمج للـ Health Check
+# 2. خادم الـ Health Check لإبقاء البوت نشطاً على Railway
 # ==========================================
 class HealthCheckHandler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -32,7 +31,6 @@ class HealthCheckHandler(BaseHTTPRequestHandler):
         self.wfile.write("Aternos Auto-Restart Bot is Running!".encode('utf-8'))
 
     def log_message(self, format, *args):
-        # تعطيل طباعة طلبات HTTP لتفادي إغراق الـ Logs
         return
 
 def start_health_check_server():
@@ -41,7 +39,7 @@ def start_health_check_server():
     server.serve_forever()
 
 # ==========================================
-# 3. المنطق الرئيسي للتحكم في السيرفر
+# 3. منطق تشغيل وإعادة تشغيل السيرفر
 # ==========================================
 def restart_logic():
     print("🤖 تم بدء عمل بوت إعادة تشغيل أترنوس التلقائي...", flush=True)
@@ -52,7 +50,6 @@ def restart_logic():
             timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
             print(f"\n[+] [{timestamp}] جاري الاتصال بأترنوس بحساب: {USER}...", flush=True)
             
-            # تسجيل الدخول وجلب البيانات
             atclient = Client()
             atclient.login(USER, PASSWORD)
             
@@ -63,11 +60,10 @@ def restart_logic():
                 print(f"❌ لم يتم العثور على سيرفر برقم الدليل ({SERVER_INDEX})! عدد السيرفرات المتاحة: {len(servers)}", flush=True)
             else:
                 server = servers[SERVER_INDEX]
-                server.fetch()  # تحديث البيانات اللحظية
+                server.fetch()
                 status = server.status
                 print(f"📌 السيرفر: {server.address} | الحالة الحالية: {status}", flush=True)
 
-                # التعامل مع جميع الحالات
                 if status == "online":
                     print("🔄 السيرفر يعمل حالياً. جاري إرسال أمر إعادة التشغيل (Restart)...", flush=True)
                     server.restart()
@@ -97,20 +93,16 @@ def restart_logic():
 
         except Exception as e:
             print(f"⚠️ حدث خطأ أثناء تنفيذ العملية: {e}", flush=True)
-            print("⏳ سيتم إعادة المحاولة بعد 5 دقائق لتفادي توقف الخدمة...", flush=True)
+            print("⏳ سيتم إعادة المحاولة بعد 5 دقائق...", flush=True)
             next_delay = RETRY_DELAY
 
         print(f"⏳ الدورة القادمة بعد: {next_delay // 60} دقيقة...", flush=True)
         time.sleep(next_delay)
 
 # ==========================================
-# 4. نقطة التشغيل الرئيسية
+# 4. تشغيل البرنامج
 # ==========================================
 if __name__ == "__main__":
-    # تشغيل خادم الـ Health Check في خلفية منفصلة
     health_thread = threading.Thread(target=start_health_check_server, daemon=True)
     health_thread.start()
-
-    # تشغيل حلقة التحكم
     restart_logic()
-
