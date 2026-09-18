@@ -3,7 +3,7 @@ import sys
 import time
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
-from python_aternos import Client, AternosServerError
+from python_aternos import Client
 
 # ==========================================
 # 1. جلب متغيرات البيئة من Railway
@@ -86,14 +86,9 @@ def restart_logic():
                 else:
                     print(f"ℹ️ حالة السيرفر حالياً: {status}، سيتم التحقق في الدورة القادمة.", flush=True)
 
-        except AternosServerError as e:
-            print(f"⚠️ خطأ خاص بسيرفرات أترنوس: {e}", flush=True)
-            print("⏳ سيتم إعادة المحاولة بعد 5 دقائق بدلاً من الانتظار 3 ساعات كاملة...", flush=True)
-            next_delay = RETRY_DELAY
-
         except Exception as e:
             print(f"⚠️ حدث خطأ أثناء تنفيذ العملية: {e}", flush=True)
-            print("⏳ سيتم إعادة المحاولة بعد 5 دقائق...", flush=True)
+            print("⏳ سيتم إعادة المحاولة بعد 5 دقائق لتفادي توقف الخدمة...", flush=True)
             next_delay = RETRY_DELAY
 
         print(f"⏳ الدورة القادمة بعد: {next_delay // 60} دقيقة...", flush=True)
